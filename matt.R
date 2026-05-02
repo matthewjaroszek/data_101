@@ -4,7 +4,7 @@ df <- read.csv("us_power_data.csv")
 #2001/01 - 2024/01
 
 avgs <- df |>
-  group_by(year, month, sectorName) |>
+  group_by(year, month, sector) |>
   summarise(
     price = mean(price, na.rm = TRUE),
     revenue = mean(revenue, na.rm = TRUE),
@@ -19,17 +19,17 @@ df$date   <- as.Date(paste(df$year, df$month, "1", sep = "-"))
 
 chosen_sector <- "residential"
 
-us_avg <- subset(avgs, tolower(trimws(sectorName)) == chosen_sector)
+us_avg <- subset(avgs, tolower(trimws(sector)) == chosen_sector)
 us_avg <- subset(us_avg, !is.na(date) & !is.na(price))
 
 nj <- subset(df,
-             tolower(trimws(sectorName)) == chosen_sector &
-             stateDescription == "New Jersey")
+             tolower(trimws(sector)) == chosen_sector &
+             state == "New Jersey")
 nj <- subset(nj, !is.na(date) & !is.na(price))
 
 mn <- subset(df,
-             tolower(trimws(sectorName)) == chosen_sector &
-             stateDescription == "Minnesota")
+             tolower(trimws(sector)) == chosen_sector &
+             state == "Minnesota")
 mn <- subset(mn, !is.na(date) & !is.na(price))
 
 start_date <- as.Date("2001-01-01")
@@ -58,3 +58,19 @@ legend("topleft",
        lty = 1,
        pch = 19,
        lwd = 2)
+
+event1d <- as.Date("2006-09-01")
+
+i <- which.min(abs(nj$date - event1d))
+event1x <- nj$date[i]
+event1y <- nj$price[i]
+
+points(event1x, event1y,
+       col = "darkred",
+       pch = 19,
+       cex = 1.8)
+
+text(event1x, event1y,
+     labels = "Data center opened",
+     pos = 3,
+     col = "darkred")
