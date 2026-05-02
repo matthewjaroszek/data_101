@@ -74,3 +74,5 @@ text(event1x, event1y,
      labels = "Data center opened",
      pos = 3,
      col = "darkred")
+
+abline(v = event1d, col = "red", lty = 2, lwd = 2)
