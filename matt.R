@@ -1,78 +1,125 @@
-options(repos = c(CRAN = "https://cloud.r-project.org"))
-install.packages("httpgd")
-df <- read.csv("us_power_data.csv")
-#2001/01 - 2024/01
+installs <- function(){
+  options(repos = c(CRAN = "https://cloud.r-project.org"))
+  install.packages("httpgd")
+  library(httpgd)
+  install.packages("dplyr")
+  library(dplyr)
+}
+installs()
 
-avgs <- df |>
+setup <- function(){
+  df <- read.csv("us_power_data.csv")
+  names(df) <- trimws(names(df))
+  df$date <- as.Date(sprintf("%d-%02d-01", df$year, df$month))
+  df <- df[, c("date", "year", "month", "sector", "state", "price", "sales")]
+  df <- subset(df, tolower(trimws(df$sector)) %in% "residential")
+  df <- subset(df, !is.na(df$date) & !is.na(df$price))
+}
+setup()
+
+avgs_month <- df |>
   group_by(year, month, sector) |>
   summarise(
     price = mean(price, na.rm = TRUE),
-    revenue = mean(revenue, na.rm = TRUE),
     sales = mean(sales, na.rm = TRUE),
     .groups = "drop"
   ) |>
-  mutate(date = paste(year, month, sep = "/"))
+  mutate(date = as.Date(sprintf("%d-%02d-01", year, month)))
 
-# make sure BOTH data frames have real Date columns
-avgs$date <- as.Date(paste0(avgs$date, "/1"), format = "%Y/%m/%d")
-df$date   <- as.Date(paste(df$year, df$month, "1", sep = "-"))
+avgs_3_month <- df |>
+  mutate(period_3mo = floor((month - 1) / 3) + 1) |>
+  group_by(year, period_3mo, sector) |>
+  summarise(
+    price = mean(price, na.rm = TRUE),
+    sales = mean(sales, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(
+    mid_month = c(2, 5, 8, 11)[period_3mo],
+    date = as.Date(sprintf("%d-%02d-01", year, mid_month))
+  )
 
-chosen_sector <- "residential"
+avgs_6_month <- df |>
+  mutate(period_6mo = floor((month - 1) / 6) + 1) |>
+  group_by(year, period_6mo, sector) |>
+  summarise(
+    price = mean(price, na.rm = TRUE),
+    sales = mean(sales, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(
+    mid_month = c(3, 9)[period_6mo],
+    date = as.Date(sprintf("%d-%02d-01", year, mid_month))
+  )
 
-us_avg <- subset(avgs, tolower(trimws(sector)) == chosen_sector)
-us_avg <- subset(us_avg, !is.na(date) & !is.na(price))
+avgs_year <- df |>
+  group_by(year, sector) |>
+  summarise(
+    price = mean(price, na.rm = TRUE),
+    sales = mean(sales, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(date = as.Date(sprintf("%d-07-01", year)))
 
-nj <- subset(df,
-             tolower(trimws(sector)) == chosen_sector &
-             state == "New Jersey")
-nj <- subset(nj, !is.na(date) & !is.na(price))
+sub_state <- function(df, states){
+  df <- subset(df, tolower(trimws(df$state)) %in% tolower(trimws(states)))
+  df <- subset(df, !is.na(df$date) & !is.na(df$price))
+  return(df)
+}
 
-mn <- subset(df,
-             tolower(trimws(sector)) == chosen_sector &
-             state == "Minnesota")
-mn <- subset(mn, !is.na(date) & !is.na(price))
+line <- function(df, color){
+  lines(df$date, df$price, type = "b", col = color, pch = 20, lwd = 1)
+}
 
-start_date <- as.Date("2001-01-01")
-end_date   <- as.Date("2024-12-01")
-x_ticks <- seq(start_date, end_date, by = "1 year")
+point <- function(df, dates, color, label){
+  dates <- as.Date(dates)
+  i <- which.min(abs(df$date - dates))
+  x <- df$date[i]
+  y <- df$price[i]
+  points(x, y,
+       col = color,
+       pch = 19,
+       cex = 1)
+  text(x, y,
+     labels = label,
+     pos = 3,
+     col = color)
+}
 
-plot(us_avg$date, us_avg$price,
+ablin <- function(date, color){
+  abline(v = as.Date(date), col = color, lty = 2, lwd = 2)
+}
+
+start <- as.Date("2001-01-01") #2001/01
+end   <- as.Date("2024-12-01") #2024/01
+x_ticks <- seq(start, end, by = "6 months")
+
+png("plot.png", width = 1500, height = 700)
+plot(avgs_year$date, avgs_year$price,
      type = "b",
      col = "black",
-     pch = 19,
-     lwd = 2,
+     pch = 20,
+     lwd = 1,
      xlab = "Date",
      ylab = "Price",
      main = "Date vs Price",
-     xlim = c(start_date, end_date),
+     xlim = c(start, end),
      xaxt = "n")
 
-lines(nj$date, nj$price, type = "b", col = "red", pch = 19, lwd = 2)
-lines(mn$date, mn$price, type = "b", col = "blue", pch = 19, lwd = 2)
+line(avgs_6_month, "red")
+#line(avgs_3_month, "green")
+line(avgs_month, "blue")
+
+point(avgs_year, "2012-01-29", "black", "TESTING")
+ablin("2012-07-1", "black")
 
 axis(1, at = x_ticks, labels = format(x_ticks, "%Y"))
 
 legend("topleft",
-       legend = c("US Avg", "New Jersey", "Minnesota"),
-       col = c("black", "red", "blue"),
+       legend = c("Year", "6 Months", "3 Months", "Month"),
+       col = c("black", "red", "green", "blue"),
        lty = 1,
        pch = 19,
        lwd = 2)
 
-event1d <- as.Date("2006-09-01")
-
-i <- which.min(abs(nj$date - event1d))
-event1x <- nj$date[i]
-event1y <- nj$price[i]
-
-points(event1x, event1y,
-       col = "darkred",
-       pch = 19,
-       cex = 1.8)
-
-text(event1x, event1y,
-     labels = "Data center opened",
-     pos = 3,
-     col = "darkred")
-
-abline(v = event1d, col = "red", lty = 2, lwd = 2)
+dev.off()
