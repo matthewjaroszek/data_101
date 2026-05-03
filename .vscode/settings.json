@@ -1,0 +1,6 @@
+{
+    "files.exclude": {
+        "config.R" : true,
+        "*.csv": true
+    }
+}

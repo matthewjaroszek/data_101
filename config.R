@@ -7,11 +7,7 @@ install.packages("dplyr")
 library(dplyr)
 
 df <- read.csv("us_power_data.csv")
-names(df) <- trimws(names(df))
-df$date <- as.Date(sprintf("%d-%02d-01", df$year, df$month))
-df <- df[, c("date", "year", "month", "sector", "state", "price", "sales")]
 df <- subset(df, tolower(trimws(df$sector)) %in% "residential")
-df <- subset(df, !is.na(df$date) & !is.na(df$price))
 
 avgs_month <- df |>
   group_by(year, month, sector) |>
