@@ -90,6 +90,7 @@ ablin <- function(date, color){
   abline(v = as.Date(date), col = color, lty = 2, lwd = 2)
 }
 
+#START EDITING FROM HERE
 start <- as.Date("2001-01-01") #2001/01
 end   <- as.Date("2024-12-01") #2024/01
 x_ticks <- seq(start, end, by = "6 months")
@@ -107,7 +108,6 @@ plot(avgs_year$date, avgs_year$price,
      xaxt = "n")
 
 line(avgs_6_month, "red")
-#line(avgs_3_month, "green")
 line(avgs_month, "blue")
 
 point(avgs_year, "2012-01-29", "black", "TESTING")
