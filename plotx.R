@@ -1,11 +1,12 @@
 #Dont delete pls
 source("config.R")
 
+#Change x in file name
+png("plotx.png", width = 1500, height = 700)
 
 start <- as.Date("2001-01-01") #2001/01
 end   <- as.Date("2024-12-01") #2024/01
 x_ticks <- seq(start, end, by = "6 months")
-png("plot.png", width = 1500, height = 700)
 
 plot(avgs_year$date, avgs_year$price,
      type = "b",
