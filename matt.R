@@ -90,7 +90,7 @@ ablin <- function(date, color){
   abline(v = as.Date(date), col = color, lty = 2, lwd = 2)
 }
 
-#START EDITING FROM HERE
+#Edit graph from here down
 start <- as.Date("2001-01-01") #2001/01
 end   <- as.Date("2024-12-01") #2024/01
 x_ticks <- seq(start, end, by = "6 months")
@@ -122,4 +122,5 @@ legend("topleft",
        pch = 19,
        lwd = 2)
 
+#Dont delete this
 dev.off()
