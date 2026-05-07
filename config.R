@@ -54,6 +54,7 @@ avgs_year <- df |>
   mutate(date = as.Date(sprintf("%d-07-01", year)))
 
 sub_state <- function(df, states){
+  print(colnames(df))
   df <- subset(df, tolower(trimws(df$state)) %in% tolower(trimws(states)))
   df <- subset(df, !is.na(df$date) & !is.na(df$price))
   return(df)
