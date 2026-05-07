@@ -20,6 +20,7 @@ plot(avgs_year$date, avgs_year$price,
      xaxt = "n")
 
 line(avgs_6_month, "red")
+line(avgs_3_month, "green")
 line(avgs_month, "blue")
 
 point(avgs_year, "2012-01-29", "black", "TESTING")
