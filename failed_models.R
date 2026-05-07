@@ -76,11 +76,7 @@ test_reg <- test_data %>%
 
 pred_lm <- as.numeric(predict(model_lm, newdata = test_reg))
 
-# Model 3: ETS
-model_ets <- ets(hotspot_ts_train)
-pred_ets <- as.numeric(forecast(model_ets, h = h)$mean)
-
-# Model 4: piecewise linear with structural break chosen on training data
+# Model 5: piecewise linear with structural break chosen on training data
 find_best_break <- function(df) {
   n <- nrow(df)
   candidates <- seq(max(18, floor(n * 0.25)), min(n - 18, ceiling(n * 0.75)))
@@ -121,22 +117,19 @@ results <- test_data %>%
   mutate(
     pred_naive = pred_naive,
     pred_lm = pred_lm,
-    pred_ets = pred_ets,
     pred_piecewise = pred_piecewise
   )
 
 metrics <- tibble(
-  model = c("Naive", "Linear + seasonality", "ETS", "Piecewise linear + seasonality"),
+  model = c("Naive", "Linear + seasonality", "Piecewise linear + seasonality"),
   RMSE = c(
     rmse(results$hotspot_price, results$pred_naive),
     rmse(results$hotspot_price, results$pred_lm),
-    rmse(results$hotspot_price, results$pred_ets),
     rmse(results$hotspot_price, results$pred_piecewise)
   ),
   MAE = c(
     mae(results$hotspot_price, results$pred_naive),
     mae(results$hotspot_price, results$pred_lm),
-    mae(results$hotspot_price, results$pred_ets),
     mae(results$hotspot_price, results$pred_piecewise)
   )
 ) %>% arrange(RMSE)
@@ -151,13 +144,12 @@ results <- results %>%
 
 # Plot 1: test-period actual vs predictions
 plot_test <- results %>%
-  select(year_month, actual = hotspot_price, pred_naive, pred_lm, pred_ets, pred_piecewise) %>%
+  select(year_month, actual = hotspot_price, pred_naive, pred_lm, pred_piecewise) %>%
   pivot_longer(-year_month, names_to = "series", values_to = "price") %>%
   mutate(series = recode(series,
                          actual = "Actual",
                          pred_naive = "Naive",
                          pred_lm = "Linear",
-                         pred_ets = "ETS",
                          pred_piecewise = "Piecewise")) %>%
   ggplot(aes(x = year_month, y = price, color = series)) +
   geom_line(linewidth = 0.8) +
