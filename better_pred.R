@@ -306,3 +306,41 @@ Error concentration check:
 print(error_diagnostics)
 cat("==========================================
 ")
+
+plot_data <- results %>%
+  select(
+    year_month,
+    actual = hotspot_price,
+    pred_naive,
+    pred_lm,
+    pred_ets,
+    pred_piecewise
+  ) %>%
+  pivot_longer(
+    cols = c(actual, pred_naive, pred_lm, pred_ets, pred_piecewise),
+    names_to = "series",
+    values_to = "price"
+  ) %>%
+  mutate(
+    series = recode(
+      series,
+      actual = "Actual",
+      pred_naive = "Naive",
+      pred_lm = "Linear",
+      pred_ets = "ETS",
+      pred_piecewise = "Piecewise"
+    )
+  )
+
+p <- ggplot(plot_data, aes(x = year_month, y = price, color = series)) +
+  geom_line(linewidth = 0.9) +
+  labs(
+    x = NULL,
+    y = "Residential price (cents per kWh)",
+    color = "Series",
+    title = "Actual vs predicted hotspot prices",
+    subtitle = paste0("Training through ", TRAIN_END_DATE)
+  ) +
+  theme_minimal()
+
+ggsave("output/actual_vs_predictions_with_piecewise.png", p, width = 9, height = 5, dpi = 300)
