@@ -1,4 +1,5 @@
 #Dont delete pls
+#Used for creating graphs for slides
 source("config.R")
 
 #Change x in file name
