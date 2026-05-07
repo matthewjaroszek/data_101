@@ -27,22 +27,11 @@
 #   - sectorName (e.g., "Residential")
 #   - price (numeric, residential price in cents per kWh)
 #   - sales (numeric, millions of kWh) — used for weighting
-#
-# You must set DATA_PATH below to your CSV file path.
-
-# -----------------
-# 0. Load libraries
-# -----------------
 
 library(tidyverse)
 library(lubridate)
 library(broom)
 
-# -------------
-# 1. Read data
-# -------------
-
-# Update this path to your actual CSV file location
 DATA_PATH <- "og_data.csv"
 
 raw <- readr::read_csv(DATA_PATH, show_col_types = FALSE)
@@ -50,10 +39,6 @@ raw <- readr::read_csv(DATA_PATH, show_col_types = FALSE)
 cat("Columns in input data:
 ")
 print(names(raw))
-
-# -----------------------------
-# 2. Basic cleaning and setup
-# -----------------------------
 
 # Keep only true US states + DC (drop aggregates like "U.S. Total", regions)
 valid_states <- c(state.name, "District of Columbia")
@@ -70,12 +55,7 @@ elec_res <- raw %>%
     year_month = floor_date(date, unit = "month")
   )
 
-cat("Number of states after filtering:", length(unique(elec_res$stateDescription)), "
-")
-
-# --------------------------------------------
-# 3. Focus period and hotspot state selection
-# --------------------------------------------
+cat("Number of states after filtering:", length(unique(elec_res$stateDescription)), "")
 
 # Define AI / data-center boom period
 PERIOD_START <- as.Date("2016-01-01")
@@ -89,16 +69,10 @@ panel <- elec_res %>%
     hotspot = stateDescription %in% hotspot_states
   )
 
-cat("Observation counts by hotspot status:
-")
+cat("Observation counts by hotspot status:")
 print(panel %>% count(hotspot))
 
-# ---------------------------------
-# 4. Compute national and hotspot means
-# ---------------------------------
 
-# Monthly US sales-weighted average residential price
-# Monthly hotspot (VA, TX, CA) sales-weighted average price
 hotspot_monthly <- panel %>%
   filter(hotspot) %>%
   group_by(year_month) %>%
@@ -141,13 +115,6 @@ sd_rest    <- sd(comparison_monthly$rest_price, na.rm = TRUE)
 n_hotspot <- sum(!is.na(comparison_monthly$hotspot_price))
 n_rest    <- sum(!is.na(comparison_monthly$rest_price))
 
-# -----------------------------------
-# 5. Large-sample Z-test for mean diff
-# -----------------------------------
-
-# Assuming the monthly averages are approximately independent
-# and using the usual standard error for difference in means:
-# standard error for difference in means
 se_diff <- sqrt(sd_hotspot^2 / n_hotspot + sd_rest^2 / n_rest)
 
 # test statistic for H1: hotspot > rest
@@ -169,10 +136,6 @@ z_results <- tibble(
 )
 
 print(z_results)
-
-# ------------------------
-# 6. Visualizations
-# ------------------------
 
 if (!dir.exists("output")) dir.create("output")
 
