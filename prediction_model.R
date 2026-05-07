@@ -1,7 +1,5 @@
-# =========================================================
 # Predict US residential electricity price
 # using total customers + total sales
-# =========================================================
 
 DATA_PATH <- "og_data.csv"
 TRAIN_END_DATE <- as.Date("2016-12-31")
@@ -10,10 +8,8 @@ OUTPUT_DIR <- "output"
 library(tidyverse)
 library(lubridate)
 
-# 1. Read data
 raw <- readr::read_csv(DATA_PATH, show_col_types = FALSE)
 
-# 2. Check columns
 required_cols <- c(
   "year", "month", "stateDescription", "sectorName",
   "customers", "price", "revenue", "sales"
@@ -24,7 +20,6 @@ if (length(missing_cols) > 0) {
   stop(paste("Missing columns:", paste(missing_cols, collapse = ", ")))
 }
 
-# 3. Keep actual states + DC, residential only
 valid_states <- c(state.name, "District of Columbia")
 
 data_clean <- raw %>%
@@ -51,7 +46,6 @@ if (nrow(data_clean) == 0) {
   stop("No valid residential state rows found.")
 }
 
-# 4. Build national monthly residential series
 us_monthly <- data_clean %>%
   group_by(date) %>%
   summarise(
@@ -71,7 +65,6 @@ if (nrow(us_monthly) < 24) {
   stop("Not enough monthly data.")
 }
 
-# 5. Train/test split
 train_df <- us_monthly %>%
   filter(date <= TRAIN_END_DATE)
 
@@ -86,7 +79,6 @@ if (nrow(test_df) == 0) {
   stop("No test data. Pick an earlier TRAIN_END_DATE.")
 }
 
-# 6. Fit model
 model_cs <- lm(
   us_price ~ log_sales + log_customers + month_factor,
   data = train_df
@@ -95,7 +87,6 @@ model_cs <- lm(
 cat("\nMODEL SUMMARY:\n")
 print(summary(model_cs))
 
-# 7. Predict on test set
 test_df <- test_df %>%
   mutate(
     pred_price = predict(model_cs, newdata = test_df)
@@ -108,13 +99,11 @@ rmse <- function(actual, predicted) {
 test_rmse <- rmse(test_df$us_price, test_df$pred_price)
 cat("\nTEST RMSE:", round(test_rmse, 4), "\n")
 
-# 8. Predict over full period
 full_df <- us_monthly %>%
   mutate(
     pred_price = predict(model_cs, newdata = us_monthly)
   )
 
-# 9. Plot actual vs model over full period
 plot_df <- full_df %>%
   select(date, actual = us_price, model = pred_price) %>%
   pivot_longer(
@@ -147,7 +136,6 @@ p <- ggplot(plot_df, aes(x = date, y = price, color = series)) +
 
 print(p)
 
-# 10. Save outputs
 if (!dir.exists(OUTPUT_DIR)) dir.create(OUTPUT_DIR)
 
 ggsave(
