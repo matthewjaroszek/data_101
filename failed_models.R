@@ -162,7 +162,7 @@ plot_test <- results %>%
   ) +
   theme_minimal()
 
-ggsave("output/predictions.png", plot_test, width = 9, height = 5, dpi = 300)
+ggsave("output/failed_predictions.png", plot_test, width = 9, height = 5, dpi = 300)
 
 # Plot 2: full history with train/test split and actual series
 plot_history <- hotspot_monthly %>%

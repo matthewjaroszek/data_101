@@ -139,7 +139,7 @@ print(p)
 if (!dir.exists(OUTPUT_DIR)) dir.create(OUTPUT_DIR)
 
 ggsave(
-  file.path(OUTPUT_DIR, "customers_sales_model_full_period.png"),
+  file.path(OUTPUT_DIR, "predictions.png"),
   plot = p,
   width = 9,
   height = 5,
